@@ -11,7 +11,8 @@ export default {
   scale: {
     width: 1500,
     height: 800,
-    mode: Phaser.Scale.FIT,
+    mode: Phaser.Scale.RESIZE,
+    autoCenter: Phaser.Scale.CENTER_BOTH
     // autoCenter: Phaser.Scale.CENTER_BOTH
   },
   pixelArt: true
