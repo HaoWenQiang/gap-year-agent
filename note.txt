@@ -1,0 +1,7 @@
+项目目录：
+
+frontend前端代码
+    web框架使用flask
+    LLM 默认百川，可选Openai
+
+backend_server后端代码

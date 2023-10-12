@@ -2,7 +2,7 @@
 Thumbs.db
 .DS_Store
 .vscode
-
+.idea
 
 # Vendors
 node_modules/
