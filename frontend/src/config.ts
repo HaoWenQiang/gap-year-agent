@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+// import UIPlugin from 'phaser3-rex-plugins/templates/ui/ui-plugin.js';
 
 export default {
   type: Phaser.AUTO,
@@ -15,5 +16,12 @@ export default {
     autoCenter: Phaser.Scale.CENTER_BOTH
     // autoCenter: Phaser.Scale.CENTER_BOTH
   },
-  pixelArt: true
+  pixelArt: true,
+  // plugins: [{
+  //   key: 'rexUI',
+  //   plugin: UIPlugin,
+  //   mapping: 'rexUI'
+  // }]
 };
+
+
