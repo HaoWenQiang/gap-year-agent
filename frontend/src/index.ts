@@ -9,9 +9,9 @@ const game = new Phaser.Game(
   })
 );
 
+
 window.addEventListener('resize', () => {
   const width = window.innerWidth;
   const height = window.innerHeight;
-  // game.scale.resize(width, height);
   (game.scene.getScene('CharacterCreationScene') as CharacterCreationScene).resize(width, height);
 });
