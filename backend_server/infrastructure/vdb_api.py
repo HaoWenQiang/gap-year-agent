@@ -1,4 +1,7 @@
 # -*- coding:utf-8 -*-
+"""
+    docs: https://cloud.tencent.com/document/product/1709/95833
+"""
 import requests
 
 import tcvectordb
