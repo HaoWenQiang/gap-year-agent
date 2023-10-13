@@ -2,3 +2,6 @@
 
 
 class SceneEnv:
+
+    def __init__(self):
+        pass
