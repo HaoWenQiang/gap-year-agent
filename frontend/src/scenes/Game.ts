@@ -3,6 +3,7 @@ import Phaser from 'phaser';
 export default class Demo extends Phaser.Scene {
   player!: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
+  charactersMap: Map<string, Phaser.Types.Physics.Arcade.SpriteWithDynamicBody> = new Map();
 
   constructor() {
     super('GameScene');
@@ -29,6 +30,9 @@ export default class Demo extends Phaser.Scene {
 
 	  // Joon: This is the export json file you get from Tiled. 
 	  this.load.tilemapTiledJSON("map", "assets/maps/the_ville/visuals/the_ville_jan7.json");    
+	  this.load.atlas("atlas", 
+	                  "https://mikewesthad.github.io/phaser-3-tilemap-blog-posts/post-1/assets/atlas/atlas.png", 
+	                  "https://mikewesthad.github.io/phaser-3-tilemap-blog-posts/post-1/assets/atlas/atlas.json");	  
   }
 
   create() {
@@ -50,7 +54,9 @@ export default class Demo extends Phaser.Scene {
 	  const CuteRPG_Mountains_B = map.addTilesetImage("CuteRPG_Mountains_B", "CuteRPG_Mountains_B");
 	  const CuteRPG_Desert_B = map.addTilesetImage("CuteRPG_Desert_B", "CuteRPG_Desert_B");
 	  const CuteRPG_Forest_C = map.addTilesetImage("CuteRPG_Forest_C", "CuteRPG_Forest_C");
-    
+	
+
+	  
 	  // The first parameter is the layer name (or index) taken from Tiled, the 
 	  // second parameter is the tileset you set above, and the final two 
 	  // parameters are the x, y coordinate. 
@@ -74,7 +80,27 @@ export default class Demo extends Phaser.Scene {
     foregroundL1Layer.setDepth(2);
     foregroundL2Layer.setDepth(2);
 
+		// foregroundL1Layer.renderDebug(this.add.graphics());
+		// foregroundL2Layer.renderDebug(this.add.graphics());
     const collisionsLayer = map.createLayer("Collisions", collisions, 0, 0);
+
+	// add debug grid
+    var graphics = this.add.graphics({ lineStyle: { width: 1, color: 0xaaaaaa } });
+    var cellSize = 32;  // Set the size of each grid cell
+    var swidth = Number(this.sys.game.config.width);
+    var sheight = Number(this.sys.game.config.height);
+
+    for (var i = 0; i <= swidth; i += cellSize) {
+        graphics.moveTo(i, 0);
+        graphics.lineTo(i, sheight);
+    }
+
+    for (var j = 0; j <= sheight; j += cellSize) {
+        graphics.moveTo(0, j);
+        graphics.lineTo(swidth, j);
+    }
+
+    graphics.strokePath();
     // const groundLayer = map.createLayer("Ground", walls, 0, 0);
     // const indoorGroundLayer = map.createLayer("Indoor Ground", walls, 0, 0);
     // const wallsLayer = map.createLayer("Walls", walls, 0, 0);
@@ -105,6 +131,43 @@ export default class Demo extends Phaser.Scene {
 	  camera.startFollow(this.player);
 	  camera.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 	  this.cursors = this.input.keyboard.createCursorKeys();
+	
+	  let tile_width = 32;
+	  let start_pos = [30 * tile_width + tile_width / 2, 40 * tile_width + tile_width];
+	  var character = this.physics.add
+	  .sprite(start_pos[0], start_pos[1], "atlas", "misa-front")
+	  .setSize(30, 40)
+	  .setOffset(0, 24);	
+
+	  this.charactersMap.set("test-character", character);
+	  
+	// Create the player's walking animations from the texture atlas. These are stored in the global
+	// animation manager so any sprite can access them.
+	const anims = this.anims;
+	anims.create({
+		key: "misa-left-walk",
+		frames: anims.generateFrameNames("atlas", { prefix: "misa-left-walk.", start: 0, end: 3, zeroPad: 3 }),
+		frameRate: 10,
+		repeat: -1
+	});
+	anims.create({
+		key: "misa-right-walk",
+		frames: anims.generateFrameNames("atlas", { prefix: "misa-right-walk.", start: 0, end: 3, zeroPad: 3 }),
+		frameRate: 10,
+		repeat: -1
+	});
+	anims.create({
+		key: "misa-front-walk",
+		frames: anims.generateFrameNames("atlas", { prefix: "misa-front-walk.", start: 0, end: 3, zeroPad: 3 }),
+		frameRate: 10,
+		repeat: -1
+	});
+	anims.create({
+		key: "misa-back-walk",
+		frames: anims.generateFrameNames("atlas", { prefix: "misa-back-walk.", start: 0, end: 3, zeroPad: 3 }),
+		frameRate: 10,
+		repeat: -1
+  });	
 
   }
 
@@ -143,6 +206,11 @@ export default class Demo extends Phaser.Scene {
 	  if (this.cursors.down.isDown) {
 	    this.player.body.setVelocityY(camera_speed*delta);
 	  }
-	
+	  
+	  const tc = this.charactersMap.get("test-character");
+	  if(tc) {
+		tc.anims.play("misa-front-walk", true);
+	  }
+	  
 	}  
 }
