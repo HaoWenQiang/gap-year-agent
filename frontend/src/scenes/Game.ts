@@ -28,6 +28,8 @@ export default class Demo extends Phaser.Scene {
 	  this.load.image("CuteRPG_Desert_B", "assets/maps/the_ville/visuals/map_assets/cute_rpg_word_VXAce/tilesets/CuteRPG_Desert_B.png");
 	  this.load.image("CuteRPG_Forest_C", "assets/maps/the_ville/visuals/map_assets/cute_rpg_word_VXAce/tilesets/CuteRPG_Forest_C.png");
 
+	this.load.image("state", "assets/state.png");
+
 	  // Joon: This is the export json file you get from Tiled. 
 	  this.load.tilemapTiledJSON("map", "assets/maps/the_ville/visuals/the_ville_jan7.json");    
 	  this.load.atlas("atlas", 
@@ -133,13 +135,30 @@ export default class Demo extends Phaser.Scene {
 	  this.cursors = this.input.keyboard.createCursorKeys();
 	
 	  let tile_width = 32;
-	  let start_pos = [30 * tile_width + tile_width / 2, 40 * tile_width + tile_width];
-	  var character = this.physics.add
-	  .sprite(start_pos[0], start_pos[1], "atlas", "misa-front")
-	  .setSize(30, 40)
-	  .setOffset(0, 24);	
 
-	  this.charactersMap.set("test-character", character);
+	  let uiTab = this.add.image(800, 300, 'state').setOrigin(1, 0.5).setVisible(false);
+	  uiTab.setScale(10);
+	  uiTab.setDepth(100);
+
+
+
+		for(let i = 1; i <= 10; i++){
+			let start_pos = [30 * tile_width + tile_width / 2, 40 * tile_width + tile_width];
+			var character = this.physics.add
+			.sprite(start_pos[0], start_pos[1], "atlas", "misa-front")
+			.setSize(30, 40)
+			.setOffset(0, 24);	
+
+			this.charactersMap.set(i.toString(), character);
+			character.setInteractive();
+			character.on('pointerdown', function (_pointer: any) {
+				uiTab.setPosition(character.x+1000, character.y);
+				
+				uiTab.setVisible(true);
+			});			
+		}
+
+	
 	  
 	// Create the player's walking animations from the texture atlas. These are stored in the global
 	// animation manager so any sprite can access them.
@@ -207,10 +226,26 @@ export default class Demo extends Phaser.Scene {
 	    this.player.body.setVelocityY(camera_speed*delta);
 	  }
 	  
-	  const tc = this.charactersMap.get("test-character");
-	  if(tc) {
-		tc.anims.play("misa-front-walk", true);
-	  }
+
+	  let actions = ["misa-left-walk", "misa-right-walk", "misa-front-walk", "misa-back-walk"];
+
+	  for (let i = 1; i <= 10; i++) {
+	  const tc = this.charactersMap.get(i.toString());
+	  
+		if(tc) {
+			let action = actions[Math.floor(Math.random() * actions.length)];
+			tc.anims.play(action, true);
+			if(action.includes("left")){
+				tc.body.setVelocityX(-Math.min(camera_speed*delta, 32));
+			} else if(action.includes("right")){	
+				tc.body.setVelocityX(Math.min(camera_speed*delta, 32));
+			} else if(action.includes("front")){	
+				tc.body.setVelocityY(Math.min(camera_speed*delta, 32));
+			} else if(action.includes("back")){	
+				tc.body.setVelocityY(-Math.min(camera_speed*delta, 32));
+			}
+		}
 	  
 	}  
+}
 }
