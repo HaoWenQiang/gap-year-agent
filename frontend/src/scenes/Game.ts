@@ -1,10 +1,44 @@
 import Phaser from 'phaser';
 
+type WeightedItem<T> = {
+    item: T;
+    weight: number;
+};
+
+function getRandomItem<T>(items: WeightedItem<T>[]): T | null {
+    let totalWeight = items.reduce((sum, item) => sum + item.weight, 0);
+
+    if (totalWeight === 0) {
+        return null;  // Return null if the total weight is zero to prevent division by zero
+    }
+
+    let random = Math.random() * totalWeight;
+    let cumulativeWeight = 0;
+
+    for (let i = 0; i < items.length; i++) {
+        cumulativeWeight += items[i].weight;
+
+        if (random <= cumulativeWeight) {
+            return items[i].item;
+        }
+    }
+
+    return null;  // This line should never be reached, but it's included for completeness
+}
+
+function getRandomNumber(min: number, max: number): number {
+    return Math.floor(Math.random() * (max - min + 1) + min);
+}
+
+
 export default class Demo extends Phaser.Scene {
   player!: Phaser.Types.Physics.Arcade.SpriteWithDynamicBody;
   cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   charactersMap: Map<string, Phaser.Types.Physics.Arcade.SpriteWithDynamicBody> = new Map();
+  charactersDirection: Map<string, string> = new Map();
 
+
+  
   constructor() {
     super('GameScene');
   }
@@ -142,8 +176,11 @@ export default class Demo extends Phaser.Scene {
 
 
 
-		for(let i = 1; i <= 10; i++){
-			let start_pos = [30 * tile_width + tile_width / 2, 40 * tile_width + tile_width];
+		for(let i = 1; i <= 4; i++){
+			const rx = getRandomNumber(40, 50);
+			const ry = getRandomNumber(50, 60);
+
+			let start_pos = [rx * tile_width + tile_width / 2, rx * tile_width + tile_width];
 			var character = this.physics.add
 			.sprite(start_pos[0], start_pos[1], "atlas", "misa-front")
 			.setSize(30, 40)
@@ -232,8 +269,23 @@ export default class Demo extends Phaser.Scene {
 	  for (let i = 1; i <= 10; i++) {
 	  const tc = this.charactersMap.get(i.toString());
 	  
+	  const items: WeightedItem<string>[] = [];
+
 		if(tc) {
-			let action = actions[Math.floor(Math.random() * actions.length)];
+			let action = "";
+			if(!this.charactersDirection.has(i.toString())){
+				action = actions[Math.floor(Math.random() * actions.length)];
+			} else {
+				const prev_action = String(this.charactersDirection.get(i.toString()));
+				items.push({item: prev_action, weight: 0.97});
+				for(let a of actions){
+					if(a != prev_action){
+						items.push({item: a, weight: 0.01});
+					}
+				}
+				action = String(getRandomItem(items));
+			}
+
 			tc.anims.play(action, true);
 			if(action.includes("left")){
 				tc.body.setVelocityX(-Math.min(camera_speed*delta, 32));
@@ -244,6 +296,7 @@ export default class Demo extends Phaser.Scene {
 			} else if(action.includes("back")){	
 				tc.body.setVelocityY(-Math.min(camera_speed*delta, 32));
 			}
+			this.charactersDirection.set(i.toString(), action);
 		}
 	  
 	}  
