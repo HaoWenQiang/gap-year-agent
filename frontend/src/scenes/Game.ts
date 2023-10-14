@@ -36,8 +36,10 @@ export default class Demo extends Phaser.Scene {
   cursors!: Phaser.Types.Input.Keyboard.CursorKeys;
   charactersMap: Map<string, Phaser.Types.Physics.Arcade.SpriteWithDynamicBody> = new Map();
   charactersDirection: Map<string, string> = new Map();
+  characterSpokenTo: Map<string, Array<string>> = new Map();
 
-
+	speechBubbles: Map<string, Phaser.GameObjects.Image> = new Map();
+	conversationTime: number = 0;
   
   constructor() {
     super('GameScene');
@@ -63,6 +65,7 @@ export default class Demo extends Phaser.Scene {
 	  this.load.image("CuteRPG_Forest_C", "assets/maps/the_ville/visuals/map_assets/cute_rpg_word_VXAce/tilesets/CuteRPG_Forest_C.png");
 
 	this.load.image("state", "assets/state.png");
+	this.load.image("v3", "assets/v3.png");
 
 	  // Joon: This is the export json file you get from Tiled. 
 	  this.load.tilemapTiledJSON("map", "assets/maps/the_ville/visuals/the_ville_jan7.json");    
@@ -162,11 +165,13 @@ export default class Demo extends Phaser.Scene {
 	                setSize(30, 40).
 	                setOffset(0, 0);
 	  this.player.setDepth(-1);
+	//   this.player.setPosition(30, 40);
 	  // Setting up the camera. 
 	  const camera = this.cameras.main;
 	  camera.startFollow(this.player);
 	  camera.setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 	  this.cursors = this.input.keyboard.createCursorKeys();
+	//   camera.setPosition(-300, -400);
 	
 	  let tile_width = 32;
 
@@ -175,17 +180,21 @@ export default class Demo extends Phaser.Scene {
 	  uiTab.setDepth(100);
 
 
-
 		for(let i = 1; i <= 4; i++){
 			const rx = getRandomNumber(40, 50);
 			const ry = getRandomNumber(50, 60);
 
-			let start_pos = [rx * tile_width + tile_width / 2, rx * tile_width + tile_width];
+			let start_pos = [rx * tile_width + tile_width / 2, ry * tile_width + tile_width];
 			var character = this.physics.add
 			.sprite(start_pos[0], start_pos[1], "atlas", "misa-front")
 			.setSize(30, 40)
 			.setOffset(0, 24);	
 
+			let speechBubble = this.add.image(0, 0, 'v3').setOrigin(1, 0.5).setScale(0.5).setDepth(100);
+
+			this.speechBubbles.set(i.toString(), speechBubble);
+
+			this.characterSpokenTo.set(i.toString(), []);
 			this.charactersMap.set(i.toString(), character);
 			character.setInteractive();
 			character.on('pointerdown', function (_pointer: any) {
@@ -227,6 +236,30 @@ export default class Demo extends Phaser.Scene {
 
   }
 
+  	collisionCheck(curr: number){
+		for(let i = 1; i <= 4; i++){
+			if(i != curr){
+				let j = curr;
+				if(this.charactersMap.has(i.toString()) && this.charactersMap.has(j.toString())){
+					let ax = this.charactersMap.get(i.toString())?.x;
+					let ay = this.charactersMap.get(i.toString())?.y;
+					let bx = this.charactersMap.get(j.toString())?.x;
+					let by = this.charactersMap.get(j.toString())?.y;
+					let dist = Phaser.Math.Distance.Between(Number(ax), Number(ay), Number(bx), Number(by));
+					if(dist < 75){
+						// this.characterSpokenTo.get(i.toString())?.push(j.toString());
+						// this.characterSpokenTo.get(j.toString())?.push(i.toString());
+						// this.speechBubbles.get(i.toString())?.setVisible(true);
+						// this.speechBubbles.get(i.toString())?.setPosition(ax, Number(ay)-30);
+						return i;
+					}
+				}		
+			}
+		}
+		// this.speechBubbles.get(curr.toString())?.setVisible(false);
+		return -1;
+	}
+
 	update(time: number, delta: number) {
 		// *** SETUP PLAY AND PAUSE BUTTON *** 
 		let play_context = this;
@@ -265,14 +298,53 @@ export default class Demo extends Phaser.Scene {
 	  
 
 	  let actions = ["misa-left-walk", "misa-right-walk", "misa-front-walk", "misa-back-walk"];
-
-	  for (let i = 1; i <= 10; i++) {
-	  const tc = this.charactersMap.get(i.toString());
+	//   console.log(delta)
+	  let inConverstion = new Set<Number>();
 	  
-	  const items: WeightedItem<string>[] = [];
+	  for(let i = 1; i <= 4; i++){
+		let collideWith = this.collisionCheck(i);
+		if(collideWith > 0){
+			inConverstion.add(collideWith);
+			inConverstion.add(i);	
+		}
+	  }
+// inConverstion.add(collideWith);		
+	//   }
 
+		// console.log(inConverstion);
+
+	  for (let i = 1; i <= 4; i++) {
+		const tc = this.charactersMap.get(i.toString());	  
+		const items: WeightedItem<string>[] = [];
+		
 		if(tc) {
 			let action = "";
+			// console.log(this.characterSpokenTo.get(i.toString())?.length);
+			if(inConverstion.has(i) && this.characterSpokenTo.get(i.toString())?.length == 0){
+				
+			// if(inConverstion.has(i)){
+				
+				// action = "misa-front-walk";
+				tc.body.setVelocityX(0);
+				tc.body.setVelocityY(0);
+				console.log("in conversation: " + i);
+				this.speechBubbles.get(i.toString())?.setVisible(true);
+				this.speechBubbles.get(i.toString())?.setPosition(tc.x+32, tc.y-30);
+				
+				
+				this.conversationTime += delta;
+				if(this.conversationTime > 10000){
+					this.characterSpokenTo.get(i.toString())?.push(i.toString());					
+					this.speechBubbles.get(i.toString())?.setVisible(false);
+					this.conversationTime = 0;					
+				}
+				// if(getRandomNumber(0,100) < 1){
+				// 	this.characterSpokenTo.get(i.toString())?.push(i.toString());					
+				// 	this.speechBubbles.get(i.toString())?.setVisible(false);
+				// }
+				
+				continue;
+			}
 			if(!this.charactersDirection.has(i.toString())){
 				action = actions[Math.floor(Math.random() * actions.length)];
 			} else {
@@ -297,6 +369,7 @@ export default class Demo extends Phaser.Scene {
 				tc.body.setVelocityY(-Math.min(camera_speed*delta, 32));
 			}
 			this.charactersDirection.set(i.toString(), action);
+
 		}
 	  
 	}  
